@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     rollupOptions: {
+      external: ['onnxruntime-web'],
       output: {
         manualChunks: {
           'ort': ['onnxruntime-web'],
@@ -24,6 +25,14 @@ export default defineConfig({
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+    },
+  },
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
     },
   },
 })
