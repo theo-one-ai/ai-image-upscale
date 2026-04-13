@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+// @ts-ignore
 import * as ort from 'onnxruntime-web';
 
 // 브라우저 환경에서만 ONNX Runtime 초기화
@@ -248,7 +249,7 @@ export function useUpscaler(): UseUpscalerReturn {
 
           const tensor = new ort.Tensor('float32', float32, [1, 3, readH, readW]);
           const output = await session.run({ input: tensor });
-          const outData = Object.values(output)[0];
+          const outData = Object.values(output)[0] as any;
           const [, , outH, outW] = outData.dims as number[];
           const outArr = outData.data as Float32Array;
 
