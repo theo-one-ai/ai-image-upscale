@@ -6,8 +6,8 @@ let ortInitialized = false;
 const initializeORT = () => {
   if (ortInitialized || typeof navigator === 'undefined') return;
   try {
-    // WASM 파일 경로 설정 (node_modules에서 복사되거나 CDN에서 로드)
-    ort.env.wasm.wasmPaths = {
+    // WASM 파일 경로 설정 (CDN에서 로드)
+    (ort.env.wasm as any).wasmPaths = {
       'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
       'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
       'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
@@ -133,7 +133,7 @@ export function useUpscaler(): UseUpscalerReturn {
     // 명시적으로 'wasm' 요청
     if (exec === 'wasm') {
       console.log('Using WASM backend (forced)');
-      ort.env.wasm.wasmPaths = {
+      (ort.env.wasm as any).wasmPaths = {
         'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
         'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
         'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
@@ -172,7 +172,7 @@ export function useUpscaler(): UseUpscalerReturn {
     
     // 기본값: WASM
     console.log('Falling back to WASM backend');
-    ort.env.wasm.wasmPaths = {
+    (ort.env.wasm as any).wasmPaths = {
       'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
       'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
       'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
@@ -188,8 +188,8 @@ export function useUpscaler(): UseUpscalerReturn {
       setExecBackend(backend)
       
       // WASM 경로 확인
-      if (!ort.env.wasm.wasmPaths) {
-        ort.env.wasm.wasmPaths = {
+      if (!(ort.env.wasm as any).wasmPaths) {
+        (ort.env.wasm as any).wasmPaths = {
           'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
           'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
           'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
@@ -223,8 +223,8 @@ export function useUpscaler(): UseUpscalerReturn {
       setProcessProgress(20);
 
       // WASM 경로 확인
-      if (!ort.env.wasm.wasmPaths) {
-        ort.env.wasm.wasmPaths = {
+      if (!(ort.env.wasm as any).wasmPaths) {
+        (ort.env.wasm as any).wasmPaths = {
           'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
           'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
           'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
