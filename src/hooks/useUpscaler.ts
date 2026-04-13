@@ -1,8 +1,18 @@
 import { useState, useRef, useCallback } from 'react'
 import * as ort from 'onnxruntime-web';
 
-ort.env.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
-ort.env.wasm.proxy = true;
+// 브라우저 환경에서만 ONNX Runtime 초기화
+let ortInitialized = false;
+const initializeORT = () => {
+  if (ortInitialized || typeof navigator === 'undefined') return;
+  try {
+    ort.env.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
+    ort.env.wasm.proxy = true;
+    ortInitialized = true;
+  } catch (err) {
+    console.warn('Failed to initialize ONNX Runtime:', err);
+  }
+};
 
 export type UpscaleStatus = 'idle' | 'loading' | 'ready' | 'processing' | 'done' | 'error'
 export type ScaleMode = 2 | 4
@@ -110,8 +120,10 @@ export function useUpscaler(): UseUpscalerReturn {
   const cancelRef = useRef(false)
 
   const detectBackend = useCallback(async (exec: ExecMode): Promise<string> => {
+    initializeORT(); // 브라우저 환경에서 ORT 초기화
     if (exec === 'wasm') return 'wasm'
-    try { if ('gpu' in navigator) return 'webgpu' } catch {}
+    try { if (typeof navigator !== 'undefined' && 'gpu' in navigator) return 'webgpu' } catch {}
+    if (typeof document === 'undefined') return 'wasm'; // SSR 환경에서는 wasm만 사용
     const canvas = document.createElement('canvas')
     return canvas.getContext('webgl2') ? 'webgl' : 'wasm'
   }, [])

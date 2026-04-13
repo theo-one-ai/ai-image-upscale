@@ -5,6 +5,7 @@ interface I18nContextType { lang: Lang; setLang: (l: Lang) => void; t: T }
 const I18nContext = createContext<I18nContextType | null>(null)
 
 function detectLang(): Lang {
+  if (typeof navigator === 'undefined') return 'en'
   const nav = navigator.language.toLowerCase()
   if (nav.startsWith('ko')) return 'ko'
   if (nav.startsWith('ja')) return 'ja'
