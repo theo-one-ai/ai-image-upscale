@@ -6,17 +6,19 @@ let ortInitialized = false;
 const initializeORT = () => {
   if (ortInitialized || typeof navigator === 'undefined') return;
   try {
-    // WASM 파일 경로 설정 (CDN에서 로드)
-    (ort.env.wasm as any).wasmPaths = {
-      'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
-      'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
-      'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
-      'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd-threaded.wasm',
-    };
+    // WASM 구성 설정
     ort.env.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
-    ort.env.wasm.proxy = true;
+    // proxy를 false로 설정하면 WASM을 직접 로드
+    ort.env.wasm.proxy = false;
+    
+    // WASM 파일 경로 설정 - 공식 CDN 사용
+    (ort.env.wasm as any).wasmPaths = {
+      'ort-wasm.js': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort-wasm.js',
+      'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort-wasm.wasm',
+    };
+    
     ortInitialized = true;
-    console.log('ONNX Runtime initialized');
+    console.log('ONNX Runtime initialized with proxy=false');
   } catch (err) {
     console.warn('Failed to initialize ONNX Runtime:', err);
   }
@@ -130,15 +132,9 @@ export function useUpscaler(): UseUpscalerReturn {
   const detectBackend = useCallback(async (exec: ExecMode): Promise<string> => {
     initializeORT(); // 브라우저 환경에서 ORT 초기화
     
-    // 명시적으로 'wasm' 요청
+    // 명시적으로 'wasm' 요청이거나 기본값
     if (exec === 'wasm') {
-      console.log('Using WASM backend (forced)');
-      (ort.env.wasm as any).wasmPaths = {
-        'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
-        'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
-        'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
-        'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd-threaded.wasm',
-      };
+      console.log('Using WASM backend');
       return 'wasm';
     }
     
@@ -148,17 +144,8 @@ export function useUpscaler(): UseUpscalerReturn {
       return 'wasm';
     }
     
-    // WebGPU 시도
-    try { 
-      if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
-        console.log('WebGPU available');
-        return 'webgpu';
-      }
-    } catch (e) {
-      console.debug('WebGPU check failed:', e);
-    }
-    
-    // WebGL 확인
+    // WebGPU는 Add 커널 버그로 제외 (https://github.com/microsoft/onnxruntime/issues/...)
+    // WebGL 확인 (안정적)
     try {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl2');
@@ -170,14 +157,8 @@ export function useUpscaler(): UseUpscalerReturn {
       console.debug('WebGL check failed:', e);
     }
     
-    // 기본값: WASM
-    console.log('Falling back to WASM backend');
-    (ort.env.wasm as any).wasmPaths = {
-      'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
-      'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
-      'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
-      'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd-threaded.wasm',
-    };
+    // 기본값: WASM (가장 호환성 있음)
+    console.log('Using WASM backend (fallback)');
     return 'wasm';
   }, [])
 
@@ -187,18 +168,9 @@ export function useUpscaler(): UseUpscalerReturn {
       const backend = await detectBackend(exec)
       setExecBackend(backend)
       
-      // WASM 경로 확인
-      if (!(ort.env.wasm as any).wasmPaths) {
-        (ort.env.wasm as any).wasmPaths = {
-          'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
-          'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
-          'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
-          'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd-threaded.wasm',
-        };
-      }
-      
       await getModelWithCache(MODEL_PATHS[model], (p) => setLoadProgress(p));
       setStatus('ready')
+      console.log('Model loaded successfully with backend:', backend);
     } catch (err) {
       console.error('Model load failed:', err);
       setStatus('ready')
@@ -222,18 +194,12 @@ export function useUpscaler(): UseUpscalerReturn {
       const modelUrl = await getModelWithCache(MODEL_PATHS[model], (p) => setProcessProgress(p * 0.2));
       setProcessProgress(20);
 
-      // WASM 경로 확인
-      if (!(ort.env.wasm as any).wasmPaths) {
-        (ort.env.wasm as any).wasmPaths = {
-          'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm.wasm',
-          'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd.wasm',
-          'ort-wasm-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-threaded.wasm',
-          'ort-wasm-simd-threaded.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.25.0/dist/ort-wasm-simd-threaded.wasm',
-        };
+      // executionProviders 설정 - WebGPU는 Add 커널 버그로 제외
+      // https://github.com/microsoft/onnxruntime/issues/...
+      const providers: string[] = ['wasm'];
+      if (backend === 'webgl') {
+        providers.unshift('webgl');
       }
-
-      // WebGPU는 Add 커널 버그로 제외
-      const providers = backend === 'webgl' ? ['webgl', 'wasm'] : ['wasm'];
 
       console.log('Creating inference session with backend:', backend, 'providers:', providers);
       const session = await ort.InferenceSession.create(modelUrl, {

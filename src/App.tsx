@@ -57,7 +57,7 @@ export default function App() {
   const [originalUrl, setOriginalUrl] = useState<string | null>(null)
   const [scale, setScale] = useState<ScaleMode>(4)
   const [model, setModel] = useState<ModelType>('balanced')
-  const [exec, setExec] = useState<ExecMode>('auto')
+  const [exec, setExec] = useState<ExecMode>('wasm') // WebGPU 버그 회피: WASM만 사용
   // tileMode는 모델 선택 시 자동으로 권장값으로 바뀌지만 사용자가 오버라이드 가능
   const [tileMode, setTileMode] = useState<TileMode>('normal')
   const [tileModeManual, setTileModeManual] = useState(false) // 사용자가 직접 바꿨는지
