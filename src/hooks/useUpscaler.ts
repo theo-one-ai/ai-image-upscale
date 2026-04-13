@@ -6,19 +6,11 @@ let ortInitialized = false;
 const initializeORT = () => {
   if (ortInitialized || typeof navigator === 'undefined') return;
   try {
-    // WASM 구성 설정
     ort.env.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
-    // proxy를 false로 설정하면 WASM을 직접 로드
     ort.env.wasm.proxy = false;
-    
-    // WASM 파일 경로 설정 - 공식 CDN 사용
-    (ort.env.wasm as any).wasmPaths = {
-      'ort-wasm.js': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort-wasm.js',
-      'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort-wasm.wasm',
-    };
-    
+    // wasmPaths 하드코딩 삭제 — 설치된 버전에서 자동 resolve
     ortInitialized = true;
-    console.log('ONNX Runtime initialized with proxy=false');
+    console.log('ONNX Runtime initialized');
   } catch (err) {
     console.warn('Failed to initialize ONNX Runtime:', err);
   }
